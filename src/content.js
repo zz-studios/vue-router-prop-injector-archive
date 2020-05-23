@@ -20,7 +20,6 @@ export class PropInjectorContent {
 	getContentRoutes({ name, fullPath }) { // returns the stack of routes matched (with parents!)
 		const content = this.getContent()
 
-		console.log(name)
 		if (!name && !fullPath) return []
 
 		const findContentRouteRecursive = (contentRoutes, parentFullPath) => {
