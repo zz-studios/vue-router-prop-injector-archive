@@ -12,10 +12,10 @@ export class PropInjector {
 		}
 
 
-		if (isFunction(contentProp)) {
-			this.getFallbackProp = contentProp
+		if (isFunction(fallbackProp)) {
+			this.getFallbackProp = fallbackProp
 		} else {
-			this.getFallbackProp = () => contentProp
+			this.getFallbackProp = () => fallbackProp
 		}
 	}
 

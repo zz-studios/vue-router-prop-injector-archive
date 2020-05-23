@@ -121,6 +121,7 @@ const waitForContentInjectionRoute = { // another attempte
 			// note: we loop through the props the component HAS
 			// - we don't care what props some idjit may have put in the route
 			for (const routeComponentView in components) { // for each of the components router views we have
+				console.log('routeComponentView', routeComponentView)
 				const routeComponent = components[routeComponentView]
 				const contentRouteViewProps = contentRoute.props[routeComponentView]
 
