@@ -1,6 +1,6 @@
 {
   "name": "@zz-studios/vue-router-prop-injector",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Injects content into props",
   "main": "dist/index.commonjs2.js",
   "module": "dist/index.var.js",
