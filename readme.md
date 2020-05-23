@@ -8,9 +8,6 @@ Injects content into props
 
 		npm i vue-router-prop-injector
 
-TODO: make this not part of @vue-cms?
-
-
 # Usage
 
 ## VueRouterPropInjector
