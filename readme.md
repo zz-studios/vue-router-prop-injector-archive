@@ -110,13 +110,13 @@ Our format will still be:
 ## PropInjectorContent
 Used internally to help get the right content as-needed.
 
-Has one function: getContentRoutes. This takes a route name and returns an array of the matched routes. This is similar to what's in 'to.matched' when routing.
+Has one function: getContentRoutes. This takes a route name and/or fullPath and returns an array of the matched routes. This is similar to what's in 'to.matched' when routing.
 
 	import { PropInjectorContent } from 'vue-router-prop-injector'
 
 	const content = new PropInjectorContent(content)
 
-	content.getContentRoutes('home')
+	content.getContentRoutes({ name: 'home' })
 
 
 This object is also available at runtime via:

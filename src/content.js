@@ -1,11 +1,10 @@
 const isFunction = (functionToCheck) => {
 	return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
- }
+}
 
- export class PropInjectorContent {
-	constructor(content) { // TODO: what is content? a service?
+export class PropInjectorContent {
+	constructor(content) {
 
-console.log('content', content)
 		// Q: what if they put functions further down on their object?
 		// TODO: support that!
 
@@ -18,22 +17,22 @@ console.log('content', content)
 
 	}
 
-	getContentRoutes(name) { // returns the stack of routes matched (with parents!)
-		console.log('this', this)
+	getContentRoutes({ name, fullPath }) { // returns the stack of routes matched (with parents!)
 		const content = this.getContent()
 
-		if (!name) return null
+		if (!name && !fullPath) return []
 
-		const findContentRouteRecursive = (contentRoutes) => {
-			console.log('contentRoutes', contentRoutes)
+		const findContentRouteRecursive = (contentRoutes, parentFullPath) => {
 			for (let i = 0; i < contentRoutes.length; i++) {
 				const contentRoute = contentRoutes[i]
-				// TODO: } else if (route.fullPath) {
-				if (contentRoute.name == name) {
+
+				// if we have a full path on this item, use it - if not build it based on the parents full path so far
+				const contentRouteFullPath = contentRoute.fullPath ? contentRoute.fullPath : parentFullPath + contentRoute.path
+				if ((name && contentRoute.name == name) || (fullPath && contentRouteFullPath == fullPath)) {
 					// TODO: find the component, and search UPWARDS for it!!
 					return [contentRoute]
 				} else if (contentRoute.children) {
-					const foundRoutes = findContentRouteRecursive(contentRoute.children)
+					const foundRoutes = findContentRouteRecursive(contentRoute.children, contentRouteFullPath)
 					if (foundRoutes.length > 0) {
 						foundRoutes.unshift(contentRoute)
 						return foundRoutes
@@ -45,7 +44,7 @@ console.log('content', content)
 		}
 
 		// TODO: parhaps cache by name?
-		return findContentRouteRecursive(content.routes)
+		return findContentRouteRecursive(content.routes, '')
 
 
 

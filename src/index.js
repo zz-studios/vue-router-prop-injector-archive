@@ -94,30 +94,13 @@ const waitForContentInjectionRoute = { // another attempte
 	ifNot: () => false, // we check and get out in the waitFor because it's more complex and we don't want to do it twice!
 	waitFor: ({ Vue, to }) => {
 
-		const routes = to.matched
-		const name = to.name // thanks to VueRouter for setting it on here always!
-
-
-		// TODO: THIS should be what they passed in! Not our funciton.
-		// - though VueCms will inject THIS as the content store!
-
-		// TODO: pass "content" to config?
-		// - or even a function?
-
-		console.log('Vue.prototype[PROP_NAME]', Vue.prototype[PROP_NAME])
-
-		const contentRoutes = getContent(Vue).getContentRoutes(name)
-
-		console.log('routes', routes)
-		console.log('contentRoutes', contentRoutes)
-		
+		const { matched, name, fullPath } = to
+		const contentRoutes = getContent(Vue).getContentRoutes({ name, fullPath})
 
 		if (contentRoutes.length == 0) return // we don't have any content for this route, leave it alone!
 
-
-		// wait, this has to be per-routerview!
-		for (let i = 0; i < routes.length; i++) {
-			const route = routes[i]
+		for (let i = 0; i < matched.length; i++) {
+			const route = matched[i]
 			const contentRoute = contentRoutes[i]
 
 			if (!contentRoute) {
@@ -126,8 +109,6 @@ const waitForContentInjectionRoute = { // another attempte
 			}
 
 			if (contentRoute.injected) {
-				// TODO: if we're basing content on a function, this may not be the case
-				// - but the object we got back (which we're changing by adding injected=true, would be new anyway?)
 				break // we have already injected this route (it's all or nothing with the props, right?)
 			}
 
@@ -170,43 +151,19 @@ const waitForContentInjectionRoute = { // another attempte
 
 const waits = [waitForContentInjectionRoute]
 
-// TODO: where t p
-
-// TODO: my install is so simple, do I even need the factory here?
-
 const install = (Vue, config) => {
-
 	install.installed = true
-
 	checkMultipleVue(Vue)
 	setConfig(config, Vue)
-
 	setContentInjector(Vue)
-	// registerVuexModules(Vue, vuexModules)
-	// registerRoutes(Vue, routes)
 	registerWaits(Vue, waits)
-
-	// registerComponents(Vue, components)
-	// registerDirectives(Vue, directives)
-	// registerPlugins(Vue, plugins)
 }
-
-
-// TODO: what I loaded on Vue - needs to replace theirs on the CMS routes
-
-// new Vue({
-// 	router,
-// 	store,
-// 	render: h => h(App),
-// }).$mount('#app')
-
 
 // note: we are exporting both VueRouterPropInjector AND install because in the future we may have individual features we want to be able to intall separately if need be.
 const VueRouterPropInjector = {
 	install,
 	NAME
 }
-
 
 export {
 	install,
