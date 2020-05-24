@@ -4,9 +4,12 @@
 Injects content into props
 
 
+NOTE: I have not published this to npm yet!
+(working on it)
+
 # Install
 
-		npm i vue-router-prop-injector
+		npm i @zz-studios/vue-router-prop-injector
 
 # Usage
 
