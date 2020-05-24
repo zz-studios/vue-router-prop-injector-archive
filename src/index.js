@@ -24,25 +24,11 @@ const checkMultipleVue = (() => {
 	}
 })()
 
+const getPrototype = (Vue = OurVue) => Vue.prototype[PROP_NAME] = OurVue.prototype[PROP_NAME] = Vue.prototype[PROP_NAME] || OurVue.prototype[PROP_NAME] || {}
 
-
-// config:
-// TODO: do we need/care about the STORE?
-// - no, it should be outside of this project!
-// var vueRouterPropInjectorConfig = {
-//   content,
-//   router,
-// }
 const setConfig = (config, Vue = OurVue) => {
-	// Ensure we have a $bvConfig Object on the Vue prototype.
-	// We set on Vue and OurVue just in case consumer has not set an alias of `vue`.
-
 	if (config) {
-		Vue.prototype[PROP_NAME] = OurVue.prototype[PROP_NAME] =
-			Vue.prototype[PROP_NAME] || OurVue.prototype[PROP_NAME] || {}
-		// Apply the config values
-
-		Vue.prototype[PROP_NAME].config = new PropInjectorConfig(Vue, config)
+		getPrototype(Vue).config = new PropInjectorConfig(Vue, config)
 	}
 }
 
@@ -52,7 +38,7 @@ export const getConfig = (Vue) => Vue.prototype[PROP_NAME].config
 
 const setContentInjector = (Vue) => {
 	const config = getConfig(Vue)
-	Vue.prototype[PROP_NAME].content = new PropInjectorContent(config.content)
+	getPrototype(Vue).content = new PropInjectorContent(config.content)
 }
 
 export const getContent = (Vue) => Vue.prototype[PROP_NAME].content
@@ -74,7 +60,7 @@ const registerWaits = (Vue, waits) => {
 
 	if (!waits || waits.length == 0) return
 	const router = getRouter(Vue)
-	
+
 	waits.forEach(wait => {
 		router.beforeEach(async (to, from, next) => {
 			if (!wait.ifNot({ Vue, router, to, from, next })) {
@@ -84,67 +70,17 @@ const registerWaits = (Vue, waits) => {
 
 		})
 	})
-
-	// TODO: move somewhere else?
-	// registerContentInjection(Vue)
 }
 
-// for this attempt, the first time we hit a route, it checks
 const waitForContentInjectionRoute = { // another attempte
 	ifNot: () => false, // we check and get out in the waitFor because it's more complex and we don't want to do it twice!
 	waitFor: ({ Vue, to }) => {
 
 		const { matched, name, fullPath } = to
-		const contentRoutes = getContent(Vue).getContentRoutes({ name, fullPath})
 
-		if (contentRoutes.length == 0) return // we don't have any content for this route, leave it alone!
+		// this will inject our content into all the matched routes
+		getContent(Vue).inject(matched)
 
-		for (let i = 0; i < matched.length; i++) {
-			const route = matched[i]
-			const contentRoute = contentRoutes[i]
-
-			if (!contentRoute) {
-				warn('contentRoute not nested the same as in the actual route. This can cause the side effects of igonore the parent\'s props.', route)
-				break
-			}
-
-			if (contentRoute.injected) {
-				break // we have already injected this route (it's all or nothing with the props, right?)
-			}
-
-			const components = route.component ? { default: route.component } : route.components
-			if (!components) {
-				warn('contentRoute is targeting a router-view that isn\'t set on this route.', contentRoute)
-				continue
-			}
-
-			// note: we loop through the props the component HAS
-			// - we don't care what props some idjit may have put in the route
-			for (const routeComponentView in components) { // for each of the components router views we have
-				const routeComponent = components[routeComponentView]
-				const contentRouteViewProps = contentRoute.props[routeComponentView]
-
-				if (!contentRouteViewProps) continue // only touch what we need to
-
-				const componentProps = routeComponent.props
-				const routeViewProps = route.props[routeComponentView] ? route.props[routeComponentView] : route.props[routeComponentView] = {} // so it can always exists now
-
-				for (const componentPropName in componentProps) { // we loop through the props that exist on the component
-					const contentRouteViewProp = contentRouteViewProps[componentPropName]
-
-					if (!contentRouteViewProp) continue // only touch what we need to
-
-					// this will set it even if it didn't already exist, perfect!
-					routeViewProps[componentPropName] =
-						new PropInjector(
-							contentRouteViewProp,
-							routeViewProps[componentPropName]
-						).prop
-				}
-			}
-
-			contentRoute.injected = true
-		}
 	}
 }
 
@@ -154,6 +90,7 @@ const waits = [waitForContentInjectionRoute]
 const install = (Vue, config) => {
 	install.installed = true
 	checkMultipleVue(Vue)
+
 	setConfig(config, Vue)
 	setContentInjector(Vue)
 	registerWaits(Vue, waits)

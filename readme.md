@@ -123,22 +123,37 @@ This object is also available at runtime via:
 	
 	this.$vueRouterPropInjector.content
 
+### Constructor Parameters
+* content - the content object or function where your content comes from
+
+### Properties
+* routes - the routes array from the content source
+* inject - takes a list of routes from a routes "to.matched" and will inject the appropriate content into them
+
+### Functions
+* getContentRoute - will get the content for a route by its name or fullPath (name if both are supplied)
+
 ## PropInjector
 Used to inject a prop with a value. You can set a prop to it and it will inject it.
 
 ### Constructor Parameters
 * contentProp - a string or function that will return a props value 
-*	fallbackProp - a prop value to fallback on if the contentProp is blank
+*	routerProp - the prop from the router
+* componentProp - the prop from the component, used here for its possible default value
 
+All constructor parameters can be undefined and all will work just fine
+
+### Properties
+value - this accessor will return the value for the prop and will fallback from contentProp -> routerProp -> componentProp
+
+### Use
 This is used internally, but won't actually be assigned if the contentProp was blank and will fallback to the routers prop value if there is no value passed.
-
-it has one property accessor `prop` that can be assinged to a prop.
 
 	import { PropInjector } from './prop.injector'
 	import Router from 'vue-router'
 
 	const propInjectorWithValue = new PropInjector('test1')
-	const propInjectorWithFallbackValue = new PropInjector('test2', 'test2') // obviously we ARE supplying a value!
+	const propInjectorWithRouterValue = new PropInjector('test2', 'test2') // obviously we ARE supplying a value!
 	const propInjectorWithFunctions = new PropInjector(() => 'test1', () => 'test2')
 
 	const router = new Router({
@@ -149,16 +164,15 @@ it has one property accessor `prop` that can be assinged to a prop.
 					default: MainView,
 				},
 				props: { 
-					propWithValue: propInjectorWithValue.prop,
-					propWithFallbackValue: propInjectorWithFallbackValue.prop,
-					propWithFunctions: propInjectorWithFunctions.prop,
+					propWithValue: propInjectorWithValue.value,
+					propWithFallbackValue: propInjectorWithFallbackValue.value,
+					propWithFunctions: propInjectorWithFunctions.value,
 				}
 		}]
 	})
 
 
 # How it works
-
 
 The Vue Router Prop Injector works is fairly simple. It adds or replaces props in your Vue Router that match the route name and router view name that you specify in your content object.
 
