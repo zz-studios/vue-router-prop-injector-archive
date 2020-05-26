@@ -41,72 +41,169 @@ NOTE: I have not published this to npm yet!
 
 # Configuration Parameters
 
-## content
-TODO: make the format a callable object...?
+## Content
 The structure for the content follows closely with the vue-router structure.
 
+Note: for the continuation of this document, we will leave out the the first two levels of the content object and the routes property for the sake of brevity, vertical real estate, and general sanity:
+
+		const content = { routes: [/* we will only show this */] }
+
+
+
 Please note the following diferences:
-While vue-router suppors both named and unnamed routes, our structure does not. That doesn't mean we will not inject content into those routes, just that the structure of the content doesn't support it.
+
+* Named vs. unnamed router-views
+While vue-router supports both named and unnamed router-views, our structure does not. That doesn't mean we will not inject content into those routes, just that the structure of the content doesn't support it. 
+If you only have the unnamed router-view, it will go under the default router-view name.
 
 For example, if your route has:
 
 	const content = {
-      path: '/',
-      component: MainView,
-      props: { mainProp: 'Value' }
+		path: '/',
+		name: 'home',
+		component: MainView,
+		props: { mainProp: 'Value' }
 	}
 
 Our format will still be:
 
-	const content = {
+	{
 		name: 'home',
+		path: '/',
 		props: {
 			default: {
 				mainProp: 'Value' 
 			}
 		}
+	},
+
+
+
+* The path property here is the full path. This is because our content matches the router's matched array, not your router's configuration routes. Also note that in that matched array, empty sub routes( a child with a path of "") used in the the Vue Routers's nested routes to set the components and props of a route show up with an extra '/'.
+
+If your router defnition had:
+
+	{
+		path: '/',
+		children: [
+			{
+				name: 'home',
+				path: '',
+				{
+					path: 'homechild1',
+					children: [
+						{
+							name: 'homechild1',
+							path: '',
+						},
+					],
+				},
+			}
+		]
 	}
+					
+
+your content would be at:
+
+	{
+		path: '',
+		children: [
+			{
+				name: 'home',
+				path: '/',
+				{
+					path: '/homechild1',
+					children: [
+						{
+							name: 'homechild1',
+							path: '/homechild1/',
+							props: {
+								default: {
+									mainProp: 'content',
+								}
+							}
+						},
+					],
+				},
+			}
+		]
+	}
+
+* just like in Vue Router, the child nesting is optional since they are irrelevant due to the name and path being the full path. The only reason you may want to use nested routing is for ease of storage and presentation. This even includes the empty sub routes (denoted with an extra '/')
+
+Using the previous example:
+
+	{
+		path: '',
+	},
+	{
+		name: 'home',
+		path: '/',
+	},
+	{
+		path: '/homechild1',
+	},
+	{
+		name: 'homechild1',
+		path: '/homechild1/',
+		props: {
+			default: {
+				mainProp: 'content',
+			}
+		}
+	},
+
+Of course, at this point, any content route without prop values is irrelevant, so we can simplify our content object:
+
+	{
+		name: 'homechild1',
+		path: '/homechild1/',
+		props: {
+			default: {
+				mainProp: 'content',
+			}
+		}
+	},
+
+	
+Side note: I could have considered not using name at all, since the route is unique enough, but I wanted to support the posibility that a route would move in a site's tree, but still keep its name. Which when you think about it, is the reason named routes exist in the first place.
+
 
 ## More details examples
 
-	const content = {
-		routes: [{
+	{
+		name: 'home',
+		props: {
+			default: {
+				mainProp: 'Content',
+			},
+		},
+	}
+
+### With child routes
+
+	{
+		props: {
+			default: {
+				mainProp: 'Content',
+			},
+		},
+		children: [{ // note that with child routs, the first child is path = '' and contains the name instead of the '/' parent
 			name: 'home',
 			props: {
 				default: {
 					mainProp: 'Content',
 				},
 			},
-		}]
-	}
-
-### With child routes
-
-	const content = {
-		routes: [{
+		},{
+			name: 'firstChild',
 			props: {
 				default: {
 					mainProp: 'Content',
 				},
 			},
-			children: [{ // note that with child routs, the first child is path = '' and contains the name instead of the '/' parent
-				name: 'home',
-				props: {
-					default: {
-						mainProp: 'Content',
-					},
-				},
-			},{
-				name: 'firstChild',
-				props: {
-					default: {
-						mainProp: 'Content',
-					},
-				},
-			}]
 		}]
 	}
-
 
 # Other useful Objects 
 
@@ -177,7 +274,7 @@ This is used internally, but won't actually be assigned if the contentProp was b
 
 # How it works
 
-The Vue Router Prop Injector works is fairly simple. It adds or replaces props in your Vue Router that match the route name and router view name that you specify in your content object.
+The Vue Router Prop Injector works is fairly simple. It adds or replaces props in your Vue Router that match the route name, router view name and prop name that you specify in your content object.
 
 So if you have a component named "MainView" and it has a prop named 'title':
 
@@ -220,6 +317,22 @@ You can use it as follows:
 	Vue.use(VueRouterPropInjector, { content, router })
 
 And it will go through and assign every prop that matches with the props in the content object.
+
+It does this for the list of matched routes in the parameter during the router's beforeEach event. This means that it will not attempt to modify the router (Vue.prototype.$router) until the route has been accessed. When it does, it will modify or add that prop to the list of props in the router with the injector. 
+
+# Content Matching
+
+The content route is retreived by either name or path using the following method:
+* for each route and children of those routes
+	* if the matched route has a name
+		* if the name matches return that content route
+		* if not, continue
+	* if the matched route has no name
+		* if the path patches return that content route
+		* if not, continue
+
+Once we have the content route, all of that routes prop values are replaced (or added if they exist in the component but not the route) by our Prop Injectors value accessor which will return the content's value, but fallback to the router's value and then to the components default value (even though the router's value may do that anyway).
+
 
 # Why
 OK, now you may be asking yourself why do I need to do this? Why wouldn't I just put the prop values right in my router. The answer is easy - since the content object can be injected at run time, you can source your content object from ANYWHERE.

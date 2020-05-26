@@ -3,6 +3,9 @@ import { warn } from './utils/warn'
 
 import { PropInjector } from './prop.injector'
 import { PropInjectorContent } from './content'
+import { PropInjectorRoute } from './route'
+import { PropInjectorProp } from './prop'
+
 import { PropInjectorConfig } from './config'
 
 const NAME = 'VueRouterPropInjector'
@@ -107,6 +110,8 @@ export {
 	NAME,
 	VueRouterPropInjector,
 	PropInjector,
+	PropInjectorRoute,
+	PropInjectorProp,
 	PropInjectorContent,
 }
 
